@@ -1,0 +1,52 @@
+{
+  "name": "@nuecms/storage-provider",
+  "version": "0.0.1",
+  "packageManager": "pnpm@9.13.2",
+  "description": "Storage provider interfaces and their implementations. supports Aliyun OSS, Tencent COS, AWS S3, Local File System.",
+  "keywords": [
+    "storage",
+    "provider",
+    "aliyun",
+    "oss",
+    "tencent",
+    "cos",
+    "aws",
+    "s3",
+    "local",
+    "file",
+    "system"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "author": "Terry Cai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuecms/storage-provider.git"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "@types/ali-oss": "^6.16.11",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.9.2",
+    "@vitest/ui": "^2.1.5",
+    "aws-sdk-client-mock": "^4.1.0",
+    "dotenv": "^16.4.5",
+    "ts-jest": "^29.2.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.5"
+  },
+  "peerDependencies": {
+    "@aws-sdk/client-s3": "^3.699.0",
+    "@aws-sdk/s3-request-presigner": "^3.699.0",
+    "ali-oss": "^6.21.0",
+    "cos-nodejs-sdk-v5": "^2.14.6"
+  }
+}
