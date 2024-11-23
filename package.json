@@ -19,6 +19,10 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "author": "Terry Cai",
   "license": "MIT",
   "repository": {
@@ -29,7 +33,9 @@
     "build": "tsup",
     "test": "vitest",
     "test:watch": "vitest watch",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "prepare": "pnpm build",
+    "npm:pub": "pnpm publish --access public"
   },
   "devDependencies": {
     "@types/ali-oss": "^6.16.11",
