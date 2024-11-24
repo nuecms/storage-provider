@@ -1,5 +1,9 @@
 # Storage Provider
 
+[![NPM Version](https://img.shields.io/npm/v/@nuecms/storage-provider.svg)](https://www.npmjs.com/package/@nuecms/storage-provider)
+[![License](https://img.shields.io/github/license/nuecms/storage-provider.svg)](https://github.com/nuecms/storage-provider/blob/main/LICENSE)
+
+
 A simple and extensible library for managing file uploads and interactions with different cloud storage providers. Currently, it supports **S3**, **Aliyun OSS**, **QCloud COS**, and **Local Storage**.
 
 ## Features
