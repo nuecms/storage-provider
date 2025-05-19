@@ -1,120 +1,119 @@
-import type { StorageProvider } from './types/StorageProvider';
-export class Driver {
-  // The map of storage engines, each of which will resolve to a promise that resolves with a provider instance.
-  private storageEngineMap: Record<string, () => Promise<StorageProvider>> = {
-    local: async () => import('./providers/LocalStorageProvider').then((module) => new module.LocalStorageProvider(this.config)),
-    aliyun: async () => import('./providers/AliyunOSSProvider').then((module) => new module.AliyunOSSProvider(this.config as any)),
-    qcloud: async () => import('./providers/QCloudCOSProvider').then((module) => new module.QCloudCOSProvider(this.config as any)),
-    s3: async () => import('./providers/S3Provider').then((module) => new module.S3Provider(this.config as any)),
-  };
+import path from 'path'
+import { type StorageProvider } from './types/StorageProvider'
 
-  private config: Record<any, any>;
-  private engine: StorageProvider | null = null;
+/**
+ * Storage Driver that manages storage providers and delegates operations
+ */
+export class StorageDriver {
+  private providers: Map<string, StorageProvider> = new Map()
+  private defaultProvider: string = 'local'
 
-  constructor(config: Record<any, any>, storage: string = 's3') {
-    this.config = config;
-    this.initEngine(storage || config.defaultProvider);
+  /**
+   * Register a storage provider
+   * @param name Provider name
+   * @param provider Provider instance
+   */
+  registerProvider(name: string, provider: StorageProvider): void {
+    this.providers.set(name, provider)
   }
 
   /**
-   * Registers a custom provider synchronously.
-   * @param name - The unique name of the provider.
-   * @param provider - A class or constructor function for the provider.
+   * Remove a storage provider
+   * @param name Provider name
    */
-  registerCustomProvider(name: string, provider: new (config?: any) => StorageProvider): void {
-    this.storageEngineMap[name] = async () => new provider(this.config);
+  removeProvider(name: string): void {
+    this.providers.delete(name)
   }
 
   /**
-   * Dynamically imports and initializes the storage engine.
-   * @param storage - The name of the storage provider to initialize.
-   * @throws Error if the provider is not found.
+   * Get a storage provider by name
+   * @param name Provider name
+   * @returns The storage provider or undefined if not found
    */
-  private async initEngine(storage: string): Promise<void> {
-    const providerFactory = this.storageEngineMap[storage];
-    if (providerFactory) {
-      this.engine = await providerFactory();
-    } else {
-      throw new Error(`Storage provider "${storage}" not found.`);
+  getProvider(name: string): StorageProvider | undefined {
+    return this.providers.get(name)
+  }
+
+  /**
+   * Set the default storage provider
+   * @param name Provider name
+   */
+  setDefaultProvider(name: string): void {
+    if (!this.providers.has(name)) {
+      throw new Error(`Provider ${name} not registered`)
     }
+    this.defaultProvider = name
   }
 
   /**
-   * Uploads a file using the configured storage engine.
-   * @param filePath - The file path to upload.
-   * @param options - Additional options for the upload.
-   * @returns The result of the upload operation.
+   * Get the default storage provider
+   * @returns The default storage provider
    */
-  async upload(filePath: string, options: Record<string, any> = {}): Promise<any> {
-    if (!this.engine) {
-      throw new Error('Storage engine not initialized.');
+  getDefaultProvider(): StorageProvider {
+    const provider = this.providers.get(this.defaultProvider)
+    if (!provider) {
+      throw new Error(`Default provider ${this.defaultProvider} not found`)
     }
-
-    const fileBuffer = await this.readFile(filePath); // Assumed to be implemented to read files
-    const fileName = options.fileName || 'default-file-name';
-    return this.engine.upload(fileBuffer, fileName, options);
+    return provider
   }
 
   /**
-   * Helper function to read file contents.
-   * @param filePath - The path to the file.
-   * @returns The file content as a Buffer.
+   * Normalize a file path
+   * @param filePath File path
+   * @returns Normalized path
    */
-  private async readFile(filePath: string): Promise<Buffer> {
-    // Implement the logic to read the file at `filePath` and return as a Buffer
-    // For example, using fs.promises.readFile or other file reading mechanism
-    const fs = require('fs').promises;
-    return fs.readFile(filePath);
+  normalizePath(filePath: string): string {
+    // Remove leading slashes and normalize path separators
+    return filePath.replace(/^[\/\\]+/, '').replace(/\\/g, '/')
   }
 
   /**
-   * Fetches a file from the configured storage engine.
-   * @param fileName - The name of the file to download.
-   * @param options - Additional options for the download.
-   * @returns The downloaded file data.
+   * Upload a file using the default provider
+   * @param file The file buffer
+   * @param fileName The name of the file
+   * @param context Additional context information
+   * @returns Promise with upload result
    */
-  async download(fileName: string, options: Record<string, any> = {}): Promise<Buffer | ReadableStream<any>> {
-    if (!this.engine) {
-      throw new Error('Storage engine not initialized.');
-    }
-    return this.engine.download(fileName, options);
+  async uploadFile(file: Buffer, fileName: string, context?: any): Promise<any> {
+    return this.getDefaultProvider().upload(file, fileName, context)
   }
 
   /**
-   * Deletes a file using the configured storage engine.
-   * @param fileName - The name of the file to delete.
-   * @param options - Additional options for the delete operation.
-   * @returns The result of the delete operation.
+   * Download a file using the default provider
+   * @param filePath The path of the file to download
+   * @returns Promise with the file buffer
    */
-  async delete(fileName: string, options: Record<string, any> = {}): Promise<any> {
-    if (!this.engine) {
-      throw new Error('Storage engine not initialized.');
-    }
-    return this.engine.delete(fileName, options);
+  async downloadFile(filePath: string): Promise<Buffer> {
+    const normalizedPath = this.normalizePath(filePath)
+    const fileName = path.basename(normalizedPath)
+    const directory = path.dirname(normalizedPath)
+
+    return this.getDefaultProvider().download(fileName, { directory })
   }
 
   /**
-   * Lists files in the storage engine.
-   * @param options - Additional options for the list operation.
-   * @returns A list of file names.
+   * Delete a file using the default provider
+   * @param filePath The path of the file to delete
+   * @returns Promise with deletion result
    */
-  async list(options: Record<string, any> = {}): Promise<string[]> {
-    if (!this.engine) {
-      throw new Error('Storage engine not initialized.');
-    }
-    return this.engine.list(options);
+  async deleteFile(filePath: string): Promise<any> {
+    const normalizedPath = this.normalizePath(filePath)
+    const fileName = path.basename(normalizedPath)
+    const directory = path.dirname(normalizedPath)
+
+    return this.getDefaultProvider().delete(fileName, { directory })
   }
 
   /**
-   * Retrieves the URL or identifier of a file.
-   * @param fileName - The name of the file.
-   * @param options - Additional options for the operation.
-   * @returns The URL or identifier of the file.
+   * Get URL for a file using the default provider
+   * @param filePath The path of the file
+   * @returns Promise with the file URL
    */
-  async getUrl(fileName: string, options: Record<string, any> = {}): Promise<string> {
-    if (!this.engine) {
-      throw new Error('Storage engine not initialized.');
-    }
-    return this.engine.getUrl(fileName, options);
+  async getFileUrl(filePath: string): Promise<string> {
+    const normalizedPath = this.normalizePath(filePath)
+    const fileName = path.basename(normalizedPath)
+    const directory = path.dirname(normalizedPath)
+
+    return this.getDefaultProvider().getUrl(fileName, { directory })
   }
 }

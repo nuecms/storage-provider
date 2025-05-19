@@ -1,42 +1,51 @@
+/**
+ * Base storage provider interface that all storage providers must implement
+ */
 export interface StorageProvider {
-    /**
-     * Uploads a file to the storage provider.
-     * @param file - The file to upload, as a Buffer.
-     * @param fileName - The name to give the uploaded file.
-     * @param context - Additional context or metadata related to the upload.
-     * @returns A Promise that resolves to the URL or identifier of the uploaded file.
-     */
-    upload(file: Buffer, fileName: string, context: object): Promise<any>;
-  
-    /**
-     * Downloads a file from the storage provider.
-     * @param fileName - The name of the file to download.
-     * @param context - Additional context or metadata related to the download.
-     * @returns A Promise that resolves to the file data, which could be a Buffer or a ReadableStream.
-     */
-    download(fileName: string, context: object): Promise<Buffer | ReadableStream<any>>;
-  
-    /**
-     * Deletes a file from the storage provider.
-     * @param fileName - The name of the file to delete.
-     * @param context - Additional context or metadata related to the delete operation.
-     * @returns A Promise that resolves when the delete operation is complete.
-     */
-    delete(fileName: string, context: object): Promise<any>;
-  
-    /**
-     * Lists the files available in the storage provider.
-     * @param context - Additional context or metadata for listing files.
-     * @returns A Promise that resolves to an array of file names.
-     */
-    list(context: object): Promise<string[]>;
-  
-    /**
-     * Gets the URL or identifier of a file in the storage provider.
-     * @param fileName - The name of the file.
-     * @param context - Additional context or metadata related to the file.
-     * @returns A Promise that resolves to the URL or identifier of the file.
-     */
-    getUrl(fileName: string, context: object): Promise<string>;
-  }
-  
+  name: string
+  /**
+   * Upload a file to storage
+   * @param file The file buffer
+   * @param fileName The name of the file
+   * @param context Additional context information (like directory)
+   * @returns Promise with upload result containing url, path and any provider-specific data
+   */
+  upload(file: Buffer, fileName: string, context?: any): Promise<any>
+
+  /**
+   * Download a file from storage
+   * @param fileName The name of the file to download
+   * @param context Additional context information (like directory)
+   * @returns Promise with the file buffer
+   */
+  download(fileName: string, context?: any): Promise<Buffer>
+
+  /**
+   * Delete a file from storage
+   * @param fileName The name of the file to delete
+   * @param context Additional context information (like directory)
+   * @returns Promise with deletion result
+   */
+  delete(fileName: string, context?: any): Promise<any>
+
+  /**
+   * List files in storage
+   * @param context Additional context information (like directory)
+   * @returns Promise with array of file names
+   */
+  list(context?: any): Promise<string[]>
+
+  /**
+   * Get URL for a file
+   * @param fileName The name of the file
+   * @param context Additional context information (like directory)
+   * @returns Promise with the file URL
+   */
+  getUrl(fileName: string, context?: any): Promise<string>
+
+  /**
+   * Test the connection to the storage provider
+   * @returns Promise with the result of the connection test
+   */
+  testConnection(): Promise<any>
+}
